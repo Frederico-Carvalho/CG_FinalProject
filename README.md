@@ -1,5 +1,5 @@
-#Relatório
-##Tema: Squash & Stretch
+# Relatório
+## Tema: Squash & Stretch
 Comecei por pesquisar sobre oque o professor queria dizer com a parte de ter de focar em como usaria o Squash & Stretch na prática durante o jogo, comecei por pesquisar no google "What is Squash & Stretch" para me relembrar melhor sobre essa tecnica em questões de Computação gráfica e após um breve resumo comecei por pesquisar "how can i use the Squash&Stretch technic in real time game" e so obtive resultados que não me ajudaram muito como tutorias de como fazer rig dos modelos 3d para fazer a técnica em blender, nada sobre como implementar em tempo real em gameplay no unity. Decidi então perguntar ao ChatGPT sobre este assunto e ele falou me de alguns pontos como fazer a deformação da mesh baseando se na velocidade/acelaração do player e das colisões do player.
 
 Após isso eu comecei a pensar como poderia fazer isso em questões de projeto e tive a idea de fazer um jogo igual ao sonic com o modelo do personagem onde quando salto o personagem esticaria e quando caio ele espalmava, e quando ele acelera a sua mesh ia esticando aos poucos. Comecei o projeto a ver tutorias de como fazer um player controller parecido ao usado nos jogos do sonic.
