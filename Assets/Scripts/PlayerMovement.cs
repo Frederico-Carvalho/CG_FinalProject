@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEditor.SceneView;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -12,8 +11,15 @@ public class PlayerMovement : MonoBehaviour
     public Transform mesh;
     Rigidbody rb;
 
-    // Movement speed
+    // Movement speed and jump
     public float Speed;
+    public float jumpForce;
+    public float jumpCooldown;
+    public float airMultiplier;
+    bool readyToJump;
+    //keybind to jump
+    public KeyCode jumpKey = KeyCode.Space;
+
 
     // Orientation and Camera
     public Transform orientation;
@@ -38,6 +44,9 @@ public class PlayerMovement : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
+        // Initialize jump
+        readyToJump = true;
+
     }
 
     private void MyInput()
@@ -45,8 +54,17 @@ public class PlayerMovement : MonoBehaviour
         // Get input from keyboard or controller
         hozizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
+
+        //When can i jump
+        if (Input.GetKeyDown(jumpKey) && readyToJump && grounded)
+        {
+            readyToJump = false;
+            Jump();
+            Invoke(nameof(ResetJump), jumpCooldown);
+        }
     }
 
+    // Move the player based on input and camera orientation
     private void MovePlayer()
     {
         // Calculate movement direction relative to camera orientation
@@ -65,13 +83,36 @@ public class PlayerMovement : MonoBehaviour
         moveDirection = camForward * verticalInput + camRight * hozizontalInput;
 
         // Apply movement to the Rigidbody
-        rb.linearVelocity = new Vector3(
-            moveDirection.x * Speed,
-            rb.linearVelocity.y,
-            moveDirection.z * Speed
-        );
+        if (grounded)
+        {
+            // Calculate the target velocity
+            Vector3 targetVelocity = moveDirection * Speed;
+            // Calculate the velocity change needed
+            Vector3 velocityChange = targetVelocity - new Vector3(
+            rb.linearVelocity.x,
+            0f,
+            rb.linearVelocity.z
+            );
+            // Apply the velocity change
+            rb.AddForce(velocityChange, ForceMode.VelocityChange);
+        }
+        
+        else
+            {
+                // In air movement
+                Vector3 airVelocity = new Vector3(
+                moveDirection.x * Speed * airMultiplier,
+                rb.linearVelocity.y,
+                moveDirection.z * Speed * airMultiplier
+                );
+                // Apply air movement
+                rb.linearVelocity = airVelocity;
+            }
+            
+
     }
 
+    // Limit the player's speed
     private void SpeedControl()
     {
         Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
@@ -84,15 +125,32 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // Make the player face the movement direction
     private void FaceMovementDir()
     {
         // Flatten the movement direction to the horizontal plane
         Vector3 flatMove = new Vector3(moveDirection.x, 0, moveDirection.z);
 
-         // Calculate target rotation based on movement direction
-        Quaternion targetRotation = Quaternion.LookRotation(flatMove);
-        mesh.rotation = Quaternion.Slerp(mesh.rotation, targetRotation, 10f * Time.deltaTime);
+        // Calculate target rotation based on movement direction
+        if (flatMove.magnitude > 0.1f)
+        { 
+            Quaternion targetRotation = Quaternion.LookRotation(flatMove);
+            mesh.rotation = Quaternion.Slerp(mesh.rotation, targetRotation, 10f * Time.deltaTime);
+        }
+    }
 
+    private void Jump()
+    {
+        //Reset y velocity
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+
+        rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
+
+    }
+
+    private void ResetJump()
+    {
+        readyToJump = true;
     }
 
     // Update is called once per frame
@@ -103,13 +161,16 @@ public class PlayerMovement : MonoBehaviour
 
         MyInput();
 
-        SpeedControl();
-
         //Handle Drag
         if (grounded)
+        {
+            SpeedControl();
             rb.linearDamping = groundDrag;
+        }
         else
-            rb.linearDamping = 0;
+        {
+            rb.linearDamping = 0; 
+        }
 
     }
     private void FixedUpdate()
