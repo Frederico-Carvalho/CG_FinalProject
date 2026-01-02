@@ -6,6 +6,7 @@ public class animateStateController : MonoBehaviour
     Animator animator;
     int isWalkingHash;
     int isRunningHash;
+    int isBoostingHash;
 
     // Ground Check
     [SerializeField] float groundCheckDistance = 0.3f;
@@ -24,6 +25,7 @@ public class animateStateController : MonoBehaviour
         isRunningHash = Animator.StringToHash("IsRunning");
         isGroundedHash = Animator.StringToHash("IsGrounded");
         isJumpingHash = Animator.StringToHash("IsJumping");
+        isBoostingHash = Animator.StringToHash("IsBoosting");
         rb = GetComponentInParent<Rigidbody>();
     }
 
@@ -34,14 +36,19 @@ public class animateStateController : MonoBehaviour
         bool isGrounded = Physics.Raycast(transform.position, Vector3.down, groundCheckDistance, groundLayer);
         bool isRunning = animator.GetBool(isRunningHash);
         bool isWalking = animator.GetBool(isWalkingHash);
+        bool isBoosting = animator.GetBool(isBoostingHash);
         bool forwardPressed = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D);
 
         // defines the current speed based on the rigidbody's velocity
         float currentSpeed = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z).magnitude;
-        bool isRunningFullSpeed  = currentSpeed >= maxSpeed * 0.8f;
+        bool isRunningFullSpeed  = currentSpeed >= 10f;
+        bool isBoostingFullSpeed = currentSpeed >= maxSpeed * 0.8f;
 
         // RUN
         animator.SetBool(isRunningHash, isRunningFullSpeed && isGrounded);
+
+        //BOOST
+        animator.SetBool(isBoostingHash, isBoostingFullSpeed && isGrounded);
 
         // WALK (true if any movement key pressed)
         animator.SetBool(isWalkingHash, forwardPressed && isGrounded);

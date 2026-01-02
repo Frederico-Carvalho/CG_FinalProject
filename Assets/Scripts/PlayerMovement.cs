@@ -11,12 +11,23 @@ public class PlayerMovement : MonoBehaviour
     public Transform mesh;
     Rigidbody rb;
 
-    // Movement speed and jump
-    public float Speed;
+    // Movement speed 
+    public float currentSpeed = 0f;
+    public float maxSpeed = 10f;
+    public float acceleration = 40f;
+    public float deceleration = 50f;
+   
+    //Movement jump
     public float jumpForce;
     public float jumpCooldown;
     public float airMultiplier;
     bool readyToJump;
+
+    // Jump Cooldown
+    public float landingLockTime = 0.35f; // duração da animação
+    bool canMove = true;
+    bool wasGrounded;
+
     //keybind to jump
     public KeyCode jumpKey = KeyCode.Space;
 
@@ -25,12 +36,13 @@ public class PlayerMovement : MonoBehaviour
     public Transform orientation;
     public Transform Cam;
 
-    public float groundDrag;
+    
 
     //Ground Check
     public float playerHeight;
     public LayerMask whatIsGround;
     bool grounded;
+    public float groundDrag;
 
 
     // Start is called before the first frame update
@@ -67,6 +79,13 @@ public class PlayerMovement : MonoBehaviour
     // Move the player based on input and camera orientation
     private void MovePlayer()
     {
+        // If movement is locked, stop horizontal movement
+        if (!canMove)
+        {
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+            return;
+        }
+
         // Calculate movement direction relative to camera orientation
         Vector3 camForward = Cam.forward;
         Vector3 camRight = Cam.right;
@@ -85,25 +104,33 @@ public class PlayerMovement : MonoBehaviour
         // Apply movement to the Rigidbody
         if (grounded)
         {
-            // Calculate the target velocity
-            Vector3 targetVelocity = moveDirection * Speed;
-            // Calculate the velocity change needed
-            Vector3 velocityChange = targetVelocity - new Vector3(
-            rb.linearVelocity.x,
-            0f,
-            rb.linearVelocity.z
+            float targetSpeed = moveDirection.magnitude > 0.1f ? maxSpeed : 0f;
+
+            float accelerate = (targetSpeed > currentSpeed) ? acceleration : deceleration;
+
+            currentSpeed = Mathf.MoveTowards(
+                currentSpeed,
+                targetSpeed,
+                accelerate * Time.fixedDeltaTime
             );
-            // Apply the velocity change
-            rb.AddForce(velocityChange, ForceMode.VelocityChange);
+
+            Vector3 velocity = moveDirection.normalized * currentSpeed;
+
+            rb.linearVelocity = new Vector3(
+                velocity.x,
+                rb.linearVelocity.y,
+                velocity.z
+            );
+
         }
-        
+
         else
             {
                 // In air movement
                 Vector3 airVelocity = new Vector3(
-                moveDirection.x * Speed * airMultiplier,
+                moveDirection.x * currentSpeed * airMultiplier,
                 rb.linearVelocity.y,
-                moveDirection.z * Speed * airMultiplier
+                moveDirection.z * currentSpeed * airMultiplier
                 );
                 // Apply air movement
                 rb.linearVelocity = airVelocity;
@@ -118,9 +145,9 @@ public class PlayerMovement : MonoBehaviour
         Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
         // Limit velocity if needed
-        if (flatVel.magnitude > Speed)
+        if (flatVel.magnitude > maxSpeed)
         {
-            Vector3 limitedVel = flatVel.normalized * Speed;
+            Vector3 limitedVel = flatVel.normalized * maxSpeed;
             rb.linearVelocity = new Vector3(limitedVel.x, rb.linearVelocity.y, limitedVel.z);
         }
     }
@@ -153,11 +180,31 @@ public class PlayerMovement : MonoBehaviour
         readyToJump = true;
     }
 
+    // Lock movement for a short time after landing
+    void StartLandingLock()
+    {
+        canMove = false;
+        Invoke(nameof(EndLandingLock), landingLockTime);
+    }
+    // Unlocks it
+    void EndLandingLock()
+    {
+        canMove = true;
+    }
+
     // Update is called once per frame
     void Update()
     {
         //ground Check
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
+
+        // LANDING DETECTION
+        if (!wasGrounded && grounded)
+        {
+            StartLandingLock();
+        }
+
+        wasGrounded = grounded;
 
         MyInput();
 
