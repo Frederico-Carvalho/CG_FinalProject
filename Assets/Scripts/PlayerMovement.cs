@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    // Input variables
+    //Input variables
     float hozizontalInput;
     float verticalInput;
     Vector3 moveDirection;
@@ -23,7 +23,7 @@ public class PlayerMovement : MonoBehaviour
     public float airMultiplier;
     bool readyToJump;
 
-    // Jump Cooldown
+    //Jump Cooldown
     public float landingLockTime = 0.35f; // duração da animação
     bool canMove = true;
     bool wasGrounded;
@@ -41,29 +41,31 @@ public class PlayerMovement : MonoBehaviour
     //Ground Check
     public float playerHeight;
     public LayerMask whatIsGround;
-    bool grounded;
+    public bool grounded;
     public float groundDrag;
 
+    //Squash and Stretch 
+    public PlayerSquashStretch squashStretch;
 
-    // Start is called before the first frame update
+    //Start is called before the first frame update
     void Start()
     {
-        // Get Rigidbody component
+        //Get Rigidbody component
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
 
-        // Lock the cursor to the center of the screen and makes it invisible
+        //Lock the cursor to the center of the screen and makes it invisible
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Initialize jump
+        //Initialize jump
         readyToJump = true;
 
     }
 
     private void MyInput()
     {
-        // Get input from keyboard or controller
+        //Get input from keyboard or controller
         hozizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
 
@@ -76,32 +78,32 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Move the player based on input and camera orientation
+    //Move the player based on input and camera orientation
     private void MovePlayer()
     {
-        // If movement is locked, stop horizontal movement
+        //If movement is locked, stop horizontal movement
         if (!canMove)
         {
             rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
             return;
         }
 
-        // Calculate movement direction relative to camera orientation
+        //Calculate movement direction relative to camera orientation
         Vector3 camForward = Cam.forward;
         Vector3 camRight = Cam.right;
 
-        // Flatten the vectors to the horizontal plane 
+        //Flatten the vectors to the horizontal plane 
         camForward.y = 0f;
         camRight.y = 0f;
 
-        // Normalize the vectors 
+        //Normalize the vectors 
         camForward.Normalize();
         camRight.Normalize();
 
-        // Calculate move direction based on input and camera orientation
+        //Calculate move direction based on input and camera orientation
         moveDirection = camForward * verticalInput + camRight * hozizontalInput;
 
-        // Apply movement to the Rigidbody
+        //Apply movement to the Rigidbody
         if (grounded)
         {
             float targetSpeed = moveDirection.magnitude > 0.1f ? maxSpeed : 0f;
@@ -126,25 +128,25 @@ public class PlayerMovement : MonoBehaviour
 
         else
             {
-                // In air movement
+                //In air movement
                 Vector3 airVelocity = new Vector3(
                 moveDirection.x * currentSpeed * airMultiplier,
                 rb.linearVelocity.y,
                 moveDirection.z * currentSpeed * airMultiplier
                 );
-                // Apply air movement
+                //Apply air movement
                 rb.linearVelocity = airVelocity;
             }
             
 
     }
 
-    // Limit the player's speed
+    //Limit the player's speed
     private void SpeedControl()
     {
         Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
-        // Limit velocity if needed
+        //Limit velocity if needed
         if (flatVel.magnitude > maxSpeed)
         {
             Vector3 limitedVel = flatVel.normalized * maxSpeed;
@@ -152,13 +154,13 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Make the player face the movement direction
+    //Make the player face the movement direction
     private void FaceMovementDir()
     {
-        // Flatten the movement direction to the horizontal plane
+        //Flatten the movement direction to the horizontal plane
         Vector3 flatMove = new Vector3(moveDirection.x, 0, moveDirection.z);
 
-        // Calculate target rotation based on movement direction
+        //Calculate target rotation based on movement direction
         if (flatMove.magnitude > 0.1f)
         { 
             Quaternion targetRotation = Quaternion.LookRotation(flatMove);
@@ -173,6 +175,8 @@ public class PlayerMovement : MonoBehaviour
 
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
 
+        //Trigger squash and stretch jump effect
+        squashStretch.OnJump();
     }
 
     private void ResetJump()
@@ -180,19 +184,19 @@ public class PlayerMovement : MonoBehaviour
         readyToJump = true;
     }
 
-    // Lock movement for a short time after landing
+    //Lock movement for a short time after landing
     void StartLandingLock()
     {
         canMove = false;
         Invoke(nameof(EndLandingLock), landingLockTime);
     }
-    // Unlocks it
+    //Unlocks it
     void EndLandingLock()
     {
         canMove = true;
     }
 
-    // Update is called once per frame
+    //Update is called once per frame
     void Update()
     {
         //ground Check

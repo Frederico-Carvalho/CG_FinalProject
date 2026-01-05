@@ -1,4 +1,4 @@
-using UnityEditor.Build;
+//using UnityEditor.Build;
 using UnityEngine;
 
 public class animateStateController : MonoBehaviour
@@ -8,7 +8,7 @@ public class animateStateController : MonoBehaviour
     int isRunningHash;
     int isBoostingHash;
 
-    // Ground Check
+    //Ground Check
     [SerializeField] float groundCheckDistance = 0.3f;
     [SerializeField] LayerMask groundLayer;
     int isGroundedHash;
@@ -17,7 +17,7 @@ public class animateStateController : MonoBehaviour
     Rigidbody rb;
     [SerializeField] float maxSpeed = 10f;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    //Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         animator = GetComponent<Animator>();
@@ -29,7 +29,7 @@ public class animateStateController : MonoBehaviour
         rb = GetComponentInParent<Rigidbody>();
     }
 
-    // Update is called once per frame
+    //Update is called once per frame
     void Update()
     {
         bool isJumping = animator.GetBool(isJumpingHash);
@@ -39,24 +39,24 @@ public class animateStateController : MonoBehaviour
         bool isBoosting = animator.GetBool(isBoostingHash);
         bool forwardPressed = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D);
 
-        // defines the current speed based on the rigidbody's velocity
+        //Defines the current speed based on the rigidbody's velocity
         float currentSpeed = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z).magnitude;
         bool isRunningFullSpeed  = currentSpeed >= 10f;
         bool isBoostingFullSpeed = currentSpeed >= maxSpeed * 0.8f;
 
-        // RUN
+        //RUN
         animator.SetBool(isRunningHash, isRunningFullSpeed && isGrounded);
 
         //BOOST
         animator.SetBool(isBoostingHash, isBoostingFullSpeed && isGrounded);
 
-        // WALK (true if any movement key pressed)
+        //WALK (true if any movement key pressed)
         animator.SetBool(isWalkingHash, forwardPressed && isGrounded);
 
-        // GROUND
+        //GROUND
         animator.SetBool(isGroundedHash, isGrounded);
 
-        // JUMP
+        //JUMP
         animator.SetBool(isJumpingHash, !isGrounded);
 
     }
